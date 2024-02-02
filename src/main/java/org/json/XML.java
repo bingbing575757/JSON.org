@@ -121,29 +121,29 @@ public class XML {
         StringBuilder sb = new StringBuilder(string.length());
         for (final int cp : codePointIterator(string)) {
             switch (cp) {
-            case '&':
-                sb.append("&amp;");
-                break;
-            case '<':
-                sb.append("&lt;");
-                break;
-            case '>':
-                sb.append("&gt;");
-                break;
-            case '"':
-                sb.append("&quot;");
-                break;
-            case '\'':
-                sb.append("&apos;");
-                break;
-            default:
-                if (mustEscape(cp)) {
-                    sb.append("&#x");
-                    sb.append(Integer.toHexString(cp));
-                    sb.append(';');
-                } else {
-                    sb.appendCodePoint(cp);
-                }
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&apos;");
+                    break;
+                default:
+                    if (mustEscape(cp)) {
+                        sb.append("&#x");
+                        sb.append(Integer.toHexString(cp));
+                        sb.append(';');
+                    } else {
+                        sb.appendCodePoint(cp);
+                    }
             }
         }
         return sb.toString();
@@ -166,13 +166,13 @@ public class XML {
                 && cp != 0x9
                 && cp != 0xA
                 && cp != 0xD
-            ) || !(
+        ) || !(
                 // valid the range of acceptable characters that aren't control
                 (cp >= 0x20 && cp <= 0xD7FF)
-                || (cp >= 0xE000 && cp <= 0xFFFD)
-                || (cp >= 0x10000 && cp <= 0x10FFFF)
-            )
-        ;
+                        || (cp >= 0xE000 && cp <= 0xFFFD)
+                        || (cp >= 0x10000 && cp <= 0x10FFFF)
+        )
+                ;
     }
 
     /**
@@ -729,38 +729,26 @@ public class XML {
 
 
     // ---------------------------MileStone2------------------------------
-    public static JSONObject toJSONObject(Reader reader, JSONPointer path) throws JSONException {
-        JSONObject jo = new JSONObject();
+    public static JSONObject toJSONObject(Reader reader, JSONPointer path) throws JSONException, IOException {
+        JSONObject jsonObject = new JSONObject();
         XMLTokener x = new XMLTokener(reader);
-        AtomicBoolean foundPath = new AtomicBoolean(false);
-
-        while (x.more()) {
-            x.skipPast("<");
-            if (x.more()) {
-                parse2(x, jo, null, XMLParserConfiguration.ORIGINAL, 0, path, null, foundPath);
-                if (foundPath.get()) {
-                    // Path found, extract the object at the path
-                    return (JSONObject) path.queryFrom(jo);
-                }
-            }
+        AtomicBoolean foundPath = new AtomicBoolean(false);  // Use to track if path is found
+        parse2(x, jsonObject, null, new XMLParserConfiguration(), 0, path, null, foundPath);
+        if (!foundPath.get()) {
+            throw new JSONException("JSONPointer path not found in XML");
         }
-        // Path not found, return null or throw an exception as appropriate
-        return null; // or throw new JSONException("Path not found: " + path);
+        return jsonObject;
     }
 
-    public static JSONObject toJSONObject(Reader reader, JSONPointer path, JSONObject replacement) throws JSONException {
-        JSONObject jo = new JSONObject();
+    public static JSONObject toJSONObject(Reader reader, JSONPointer path, JSONObject replacement) throws JSONException, IOException {
+        JSONObject jsonObject = new JSONObject();
+        AtomicBoolean foundPath = new AtomicBoolean(false);  // Use to track if path is found
         XMLTokener x = new XMLTokener(reader);
-        AtomicBoolean foundPath = new AtomicBoolean(false);
-
-        while (x.more()) {
-            x.skipPast("<");
-            if (x.more()) {
-                parse2(x, jo, null, XMLParserConfiguration.ORIGINAL, 0, path, replacement, foundPath);
-                // No need to check foundPath here since we're modifying the entire JSON object
-            }
+        parse2(x, jsonObject, null, new XMLParserConfiguration(), 0, path, replacement, foundPath);
+        if (!foundPath.get()) {
+            throw new JSONException("JSONPointer path not found in XML");
         }
-        return jo;
+        return jsonObject;
     }
 
 
@@ -1018,7 +1006,7 @@ public class XML {
                         ja = (JSONArray) value;
                         int jaLength = ja.length();
                         // don't use the new iterator API to maintain support for Android
-						for (int i = 0; i < jaLength; i++) {
+                        for (int i = 0; i < jaLength; i++) {
                             if (i > 0) {
                                 sb.append('\n');
                             }
@@ -1035,7 +1023,7 @@ public class XML {
                     ja = (JSONArray) value;
                     int jaLength = ja.length();
                     // don't use the new iterator API to maintain support for Android
-					for (int i = 0; i < jaLength; i++) {
+                    for (int i = 0; i < jaLength; i++) {
                         Object val = ja.opt(i);
                         if (val instanceof JSONArray) {
                             sb.append('<');
@@ -1100,7 +1088,7 @@ public class XML {
             }
             int jaLength = ja.length();
             // don't use the new iterator API to maintain support for Android
-			for (int i = 0; i < jaLength; i++) {
+            for (int i = 0; i < jaLength; i++) {
                 Object val = ja.opt(i);
                 // XML does not have good support for arrays. If an array
                 // appears in a place where XML is lacking, synthesize an
