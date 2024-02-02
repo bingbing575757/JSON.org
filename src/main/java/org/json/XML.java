@@ -728,6 +728,40 @@ public class XML {
 
 
 
+    // ---------------------------MileStone2------------------------------
+    public static JSONObject toJSONObject(Reader reader, JSONPointer path) throws JSONException {
+        JSONObject jo = new JSONObject();
+        XMLTokener x = new XMLTokener(reader);
+        AtomicBoolean foundPath = new AtomicBoolean(false);
+
+        while (x.more()) {
+            x.skipPast("<");
+            if (x.more()) {
+                parse2(x, jo, null, XMLParserConfiguration.ORIGINAL, 0, path, null, foundPath);
+                if (foundPath.get()) {
+                    // Path found, extract the object at the path
+                    return (JSONObject) path.queryFrom(jo);
+                }
+            }
+        }
+        // Path not found, return null or throw an exception as appropriate
+        return null; // or throw new JSONException("Path not found: " + path);
+    }
+
+    public static JSONObject toJSONObject(Reader reader, JSONPointer path, JSONObject replacement) throws JSONException {
+        JSONObject jo = new JSONObject();
+        XMLTokener x = new XMLTokener(reader);
+        AtomicBoolean foundPath = new AtomicBoolean(false);
+
+        while (x.more()) {
+            x.skipPast("<");
+            if (x.more()) {
+                parse2(x, jo, null, XMLParserConfiguration.ORIGINAL, 0, path, replacement, foundPath);
+                // No need to check foundPath here since we're modifying the entire JSON object
+            }
+        }
+        return jo;
+    }
 
 
 
@@ -770,41 +804,6 @@ public class XML {
      */
     public static JSONObject toJSONObject(Reader reader) throws JSONException {
         return toJSONObject(reader, XMLParserConfiguration.ORIGINAL);
-    }
-
-    // ---------------------------MileStone2------------------------------
-    public static JSONObject toJSONObject(Reader reader, JSONPointer path) throws JSONException {
-        JSONObject jo = new JSONObject();
-        XMLTokener x = new XMLTokener(reader);
-        AtomicBoolean foundPath = new AtomicBoolean(false);
-
-        while (x.more()) {
-            x.skipPast("<");
-            if (x.more()) {
-                parse2(x, jo, null, XMLParserConfiguration.ORIGINAL, 0, path, null, foundPath);
-                if (foundPath.get()) {
-                    // Path found, extract the object at the path
-                    return (JSONObject) path.queryFrom(jo);
-                }
-            }
-        }
-        // Path not found, return null or throw an exception as appropriate
-        return null; // or throw new JSONException("Path not found: " + path);
-    }
-
-    public static JSONObject toJSONObject(Reader reader, JSONPointer path, JSONObject replacement) throws JSONException {
-        JSONObject jo = new JSONObject();
-        XMLTokener x = new XMLTokener(reader);
-        AtomicBoolean foundPath = new AtomicBoolean(false);
-
-        while (x.more()) {
-            x.skipPast("<");
-            if (x.more()) {
-                parse2(x, jo, null, XMLParserConfiguration.ORIGINAL, 0, path, replacement, foundPath);
-                // No need to check foundPath here since we're modifying the entire JSON object
-            }
-        }
-        return jo;
     }
 
 

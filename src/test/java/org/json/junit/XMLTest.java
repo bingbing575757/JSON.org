@@ -4,12 +4,6 @@ package org.json.junit;
 Public Domain.
 */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -27,6 +21,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static org.junit.Assert.*;
+
 
 /**
  * Tests for JSON-Java XML.java
@@ -40,7 +36,65 @@ public class XMLTest {
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();
 
-    
+
+    // Test Cases for Parse Functionality (Milestone 2)
+
+    @Test
+    public void testToJSONObjectReturnsCorrectSubObject() throws JSONException {
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                "  <nick>Crista </nick>\n" +
+                "  <name>Crista Lopes</name>\n" +
+                "  <address>\n" +
+                "    <street>Ave of Nowhere</street>\n" +
+                "    <zipcode>92614</zipcode>\n" +
+                "  </address>\n" +
+                "</contact>";
+
+        JSONPointer path = new JSONPointer("/contact/address/street");
+        JSONObject expected = new JSONObject("{\"street\":\"Ave of Nowhere\"}");
+        JSONObject actual = XML.toJSONObject(new StringReader(xmlString), path);
+
+        assertNotNull("Extracted JSONObject should not be null", actual);
+        assertEquals("Extracted JSONObject should match the expected", expected.toString(), actual.toString());
+    }
+
+
+    @Test
+    public void testToJSONObjectWithReplacementUpdatesCorrectly() throws JSONException {
+        // Original
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+                "<contact>\n"+
+                "  <nick>Crista </nick>\n"+
+                "  <name>Crista Lopes</name>\n" +
+                "  <address>\n" +
+                "    <street>Ave of Nowhere</street>\n" +
+                "    <zipcode>92614</zipcode>\n" +
+                "  </address>\n" +
+                "</contact>";
+
+        // Expected
+        String testxmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+                "<contact>\n"+
+                "  <nick>Crista </nick>\n"+
+                "  <name>Crista Lopes</name>\n" +
+                "  <address>\n" +
+                "    <street>Ave of the Arts</street>\n" +
+                "    <zipcode>92614</zipcode>\n" +
+                "  </address>\n" +
+                "</contact>";
+
+        JSONObject replacement = XML.toJSONObject("<street>Ave of the Arts</street>\n");
+        JSONObject actual = XML.toJSONObject(new StringReader(xmlString), new JSONPointer("/contact/address/street"), replacement);
+        JSONObject expected = XML.toJSONObject(testxmlString);
+
+        assertNotNull("Resulting JSONObject should not be null", actual);
+        assertEquals("Resulting JSONObject should match the expected", expected.toString(), actual.toString());
+    }
+
+
+
+
     /**
      * JSONObject from a null XML string.
      * Expects a NullPointerException
