@@ -59,6 +59,58 @@ public class XMLTest {
         //assertEquals("Extracted JSONObject should match the expected", expected.toString(), actual.toString());
     }
 
+    @Test
+    public void testToJSONObjectReturnsCorrectSubObject2() throws JSONException, IOException {
+        String xmlString2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<bookstore>\n" +
+                "  <book>\n" +
+                "    <title>Harry Potter and the Sorcerer's Stone</title>\n" +
+                "    <author>J.K. Rowling</author>\n" +
+                "    <price>12.99</price>\n" +
+                "  </book>\n" +
+                "</bookstore>";
+
+        try {
+            JSONObject jobj = XML.toJSONObject(new StringReader(xmlString2), new JSONPointer("/bookstore/book/author"));
+            if(jobj==null){
+                System.out.println(jobj);//null can't .toString()
+            }
+            else{
+                System.out.println(jobj.toString(4));
+            }
+
+            JSONObject expected = XML.toJSONObject("<author>J.K. Rowling</author>");
+            assertEquals(expected.toString(), jobj.toString()); // convert content to string to test bc .equals will check reference equality
+        } catch (JSONException e) {
+            System.out.println(e);
+        }
+    }
+
+    @Test
+    public void testToJSONObjectReturnsCorrectSubObject3() throws JSONException, IOException {
+        String xmlString3 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<note>\n" +
+                "  <to>Tove</to>\n" +
+                "  <from>Jani</from>\n" +
+                "  <heading>Reminder</heading>\n" +
+                "  <body><![CDATA[Don't forget to buy milk &amp; eggs on your way home!]]></body>\n" +
+                "</note>";
+
+        try {
+            JSONObject jobj = XML.toJSONObject(new StringReader(xmlString3), new JSONPointer("/note/from"));
+            if(jobj==null){
+                System.out.println(jobj);//null can't .toString()
+            }
+            else{
+                System.out.println(jobj.toString(4));
+            }
+
+            JSONObject expected = XML.toJSONObject("  <from>Jani</from>\n");
+            assertEquals(expected.toString(), jobj.toString()); // convert content to string to test bc .equals will check reference equality
+        } catch (JSONException e) {
+            System.out.println(e);
+        }
+    }
 
     @Test
     public void testToJSONObjectWithReplacementUpdatesCorrectly() throws JSONException, IOException {
@@ -92,7 +144,63 @@ public class XMLTest {
         assertEquals("Resulting JSONObject should match the expected", expected.toString(), actual.toString());
     }
 
+    @Test
+    public void testToJSONObjectWithReplacementUpdatesCorrectly2() throws JSONException, IOException {
+        // Original
+        String xmlString2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<bookstore>\n" +
+                "  <book>\n" +
+                "    <title>Harry Potter and the Sorcerer's Stone</title>\n" +
+                "    <author>J.K. Rowling</author>\n" +
+                "    <price>14.99</price>\n" +
+                "  </book>\n" +
+                "</bookstore>";
 
+        // Expected
+        String testXmlString2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<bookstore>\n" +
+                "  <book>\n" +
+                "    <title>Harry Potter and the Chamber of Secrets</title>\n" +
+                "    <author>J.K. Rowling</author>\n" +
+                "    <price>14.99</price>\n" +
+                "  </book>\n" +
+                "</bookstore>";
+
+        JSONObject replacement = XML.toJSONObject("<title>Harry Potter and the Chamber of Secrets</title>\n" );
+        JSONObject actual = XML.toJSONObject(new StringReader(xmlString2), new JSONPointer("/bookstore/book/title"), replacement);
+        JSONObject expected = XML.toJSONObject(testXmlString2);
+
+        assertNotNull("Resulting JSONObject should not be null", actual);
+        assertEquals("Resulting JSONObject should match the expected", expected.toString(), actual.toString());
+    }
+
+    @Test
+    public void testToJSONObjectWithReplacementUpdatesCorrectly3() throws JSONException, IOException {
+        // Original
+        String xmlString3 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<note>\n" +
+                "  <to>Tove</to>\n" +
+                "  <from>Jani</from>\n" +
+                "  <heading>Reminder</heading>\n" +
+                "  <body><![CDATA[Don't forget to buy milk &amp; eggs on your way home!]]></body>\n" +
+                "</note>";
+
+        // Expected
+        String testXmlString3 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<note>\n" +
+                "  <to>Tove</to>\n" +
+                "  <from>Bingbing</from>\n" +
+                "  <heading>Reminder</heading>\n" +
+                "  <body><![CDATA[Don't forget to buy milk &amp; eggs on your way home!]]></body>\n" +
+                "</note>";
+
+        JSONObject replacement = XML.toJSONObject("<from>Bingbing</from>\n");
+        JSONObject actual = XML.toJSONObject(new StringReader(xmlString3), new JSONPointer("/note/from"), replacement);
+        JSONObject expected = XML.toJSONObject(testXmlString3);
+
+        assertNotNull("Resulting JSONObject should not be null", actual);
+        assertEquals("Resulting JSONObject should match the expected", expected.toString(), actual.toString());
+    }
 
 
     /**
