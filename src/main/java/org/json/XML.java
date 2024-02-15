@@ -918,7 +918,7 @@ public class XML {
                         } else if (!nilAttributeFound) {
                             jsonObject.accumulate(keyTransformer.apply(string),
                                     config.isKeepStrings()
-                                            ? ((String) token)
+                                            ? token
                                             : stringToValue((String) token));
                         }
                         token = null;
@@ -935,7 +935,7 @@ public class XML {
                         // Force the value to be an array
                         if (nilAttributeFound) {
                             context.append(keyTransformer.apply(tagName), JSONObject.NULL);
-                        } else if (jsonObject.length() > 0) {
+                        } else if (!jsonObject.isEmpty()) {
                             context.append(keyTransformer.apply(tagName), jsonObject);
                         } else {
                             context.put(keyTransformer.apply(tagName), new JSONArray());
@@ -943,7 +943,7 @@ public class XML {
                     } else {
                         if (nilAttributeFound) {
                             context.accumulate(keyTransformer.apply(tagName), JSONObject.NULL);
-                        } else if (jsonObject.length() > 0) {
+                        } else if (!jsonObject.isEmpty()) {
                             context.accumulate(keyTransformer.apply(tagName), jsonObject);
                         } else {
                             context.accumulate(keyTransformer.apply(tagName), "");
@@ -962,7 +962,7 @@ public class XML {
                             return false;
                         } else if (token instanceof String) {
                             string = (String) token;
-                            if (string.length() > 0) {
+                            if (!string.isEmpty()) {
                                 if (xmlXsiTypeConverter != null) {
                                     jsonObject.accumulate(config.getcDataTagName(),
                                             stringToValue(string, xmlXsiTypeConverter));
@@ -978,7 +978,7 @@ public class XML {
                                 if (config.getForceList().contains(tagName)) {
 
 
-                                    if (jsonObject.length() == 0) {
+                                    if (jsonObject.isEmpty()) {
                                         context.put(keyTransformer.apply(tagName), new JSONArray());
                                     } else if (jsonObject.length() == 1
                                             && jsonObject.opt(config.getcDataTagName()) != null) {
@@ -990,7 +990,7 @@ public class XML {
                                 } else {
 
                                     // Replace tag names
-                                    if (jsonObject.length() == 0) {
+                                    if (jsonObject.isEmpty()) {
                                         context.accumulate(keyTransformer.apply(tagName), "");
                                     } else if (jsonObject.length() == 1
                                             && jsonObject.opt(config.getcDataTagName()) != null) {
@@ -1180,8 +1180,6 @@ public class XML {
     // ---------------------------MileStone3------------------------------
 
 
-    // Use Function<String, String> to receive a string input and return a string
-    // output
     public static JSONObject toJSONObject(Reader reader, Function<String, String> keyTransformer) {
         if (reader == null) {
             throw new IllegalArgumentException("Reader cannot be null");
