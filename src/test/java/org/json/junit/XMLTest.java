@@ -32,7 +32,7 @@ public class XMLTest {
     public TemporaryFolder testFolder = new TemporaryFolder();
 
 
-    // Test Cases for Parse Functionality (Milestone 2)
+    // Test Cases for Milestone 2
 
     @Test
     public void testToJSONObjectReturnsCorrectSubObject() throws JSONException, IOException {
@@ -197,7 +197,7 @@ public class XMLTest {
         assertEquals("Resulting JSONObject should match the expected", expected.toString(), actual.toString());
     }
 
-    //    ---------------------------- Milestone 3 ------------------------------
+    //Test Cases for Milestone 3
 
     @Test
     public void shouldTransformKey() {
