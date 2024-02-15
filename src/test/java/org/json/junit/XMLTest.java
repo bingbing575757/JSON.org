@@ -214,12 +214,12 @@ public class XMLTest {
 
         // Expected JSON result after adding "test_" prefix to keys
         String expectedJsonWithPrefix = "{" +
-                "\"test_contact\": {" +
-                "  \"test_nick\": \"Crista\"," +
-                "  \"test_name\": \"Crista Lopes\"," +
-                "  \"test_address\": {" +
-                "    \"test_street\": \"Ave of Nowhere\"," +
-                "    \"test_zipcode\": 92614" +
+                "\"swe262_contact\": {" +
+                "  \"swe262_nick\": \"Crista\"," +
+                "  \"swe262_name\": \"Crista Lopes\"," +
+                "  \"swe262_address\": {" +
+                "    \"swe262_street\": \"Ave of Nowhere\"," +
+                "    \"swe262_zipcode\": 92614" +
                 "  }" +
                 "}" +
                 "}";
@@ -237,7 +237,7 @@ public class XMLTest {
                 "}";
 
         // Perform transformations and tests
-        assertTransformation(xmlString, expectedJsonWithPrefix, key -> "test_" + key, "Prefix Transformation");
+        assertTransformation(xmlString, expectedJsonWithPrefix, key -> "swe262_" + key, "Prefix Transformation");
         assertTransformation(xmlString, expectedJsonWithEmptyKeys, key -> "", "Empty Key Transformation");
     }
 
