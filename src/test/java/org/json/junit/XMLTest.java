@@ -4,17 +4,11 @@ package org.json.junit;
 Public Domain.
 */
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.json.*;
 import org.junit.Rule;
@@ -200,6 +194,72 @@ public class XMLTest {
 
         assertNotNull("Resulting JSONObject should not be null", actual);
         assertEquals("Resulting JSONObject should match the expected", expected.toString(), actual.toString());
+    }
+
+    //    ---------------------------- Milestone 3 ------------------------------
+    /////////// Two Test Cases for Milestone 3 ///////////
+
+    @Test
+    public void shouldTranformKey(){
+
+        // Test Case 1
+        String xmlString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+                "<contact>\n"+
+                "  <nick>Crista </nick>\n"+
+                "  <name>Crista Lopes</name>\n" +
+                "  <address>\n" +
+                "    <street>Ave of Nowhere</street>\n" +
+                "    <zipcode>92614</zipcode>\n" +
+                "  </address>\n" +
+                "</contact>";
+
+        String expectedResult = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+                "<test_contact>\n"+
+                "  <test_nick>Crista </test_nick>\n"+
+                "  <test_name>Crista Lopes</test_name>\n" +
+                "  <test_address>\n" +
+                "    <test_street>Ave of Nowhere</test_street>\n" +
+                "    <test_zipcode>92614</test_zipcode>\n" +
+                "  </test_address>\n" +
+                "</test_contact>";
+
+        // Test Case 2
+        String expectedResult2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+                "<\"\">\n"+
+                "  <\"\">Crista </\"\">\n"+
+                "  <\"\">Crista Lopes</\"\">\n" +
+                "  <\"\">\n" +
+                "    <\"\">Ave of Nowhere</\"\">\n" +
+                "    <\"\">92614</\"\">\n" +
+                "  </\"\">\n" +
+                "</\"\">";
+
+        JSONObject jobj;
+        JSONObject jobj2;
+        JSONObject expectedObj;
+        JSONObject expectedObj2;
+
+        try {
+            jobj = XML.toJSONObject(new StringReader(xmlString), (str) -> "test_" + str); // take str input and return an appended prefix to the str input
+            jobj2 = XML.toJSONObject(new StringReader(xmlString), (str) -> ""); // take str input and return a blank key
+            expectedObj = XML.toJSONObject(expectedResult);
+            expectedObj2 = XML.toJSONObject(expectedResult2);
+        } catch (JSONException e) {
+            System.out.println(e);
+            jobj = null;
+            jobj2 = null;
+            /* Make expectedobj and expectedobj2 a new object to make them different meaning
+             * they are not the same --> test case should fail
+             */
+            expectedObj = new JSONObject();
+            expectedObj2 = new JSONObject();
+        }
+
+        // Test Case 1 --> Check for "test_" + tagName key
+        assertEquals(expectedObj.toString(), jobj.toString());
+
+        // Test Case 2 --> Check for blank key
+        assertEquals(expectedObj2.toString(), jobj2.toString());
     }
 
 
