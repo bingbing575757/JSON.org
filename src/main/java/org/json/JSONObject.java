@@ -27,6 +27,8 @@ import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import java.util.stream.Stream.Builder;
 
 import static org.json.NumberConversionUtil.potentialNumber;
 import static org.json.NumberConversionUtil.stringToNumber;
@@ -2884,5 +2886,46 @@ public class JSONObject {
         );
     }
 
+    // ----------------------- Milestone4 ---------------------------
+    /**
+     * Creates a stream of JSONNode instances representing each element in this JSONObject.
+     * which includes elements at all levels of the hierarchy, with each node including its path.
+     *
+     * @return A stream of JSONNode instances.
+     */
+    public Stream<JSONNode> toStream() {
+        Builder<JSONNode> builder = Stream.builder();
+        traverseAndBuildStream(this, "$", builder); // Start traversal from the root
+        return builder.build();
+    }
+
+    /**
+     * Recursively traverses the JSON structure, adding JSONNode instances to the stream builder.
+     *
+     * @param current The current object being traversed.
+     * @param currentPath The path from the root to the current object.
+     * @param builder The stream builder to which JSONNode instances are added.
+     */
+    private void traverseAndBuildStream(Object current, String currentPath, Builder<JSONNode> builder) {
+        if (current instanceof JSONObject) {
+            JSONObject jsonObject = (JSONObject) current;
+            jsonObject.map.forEach((key, value) -> {
+                String newPath = currentPath.equals("$") ? key : currentPath + "." + key;
+                traverseAndBuildStream(value, newPath, builder);
+            });
+        } else if (current instanceof JSONArray) {
+            JSONArray jsonArray = (JSONArray) current;
+            for (int i = 0; i < jsonArray.length(); i++) {
+                String newPath = String.format("%s[%d]", currentPath, i);
+                traverseAndBuildStream(jsonArray.get(i), newPath, builder);
+            }
+        } else {
+            builder.add(new JSONNode(null, current, currentPath)); // Add leaf nodes
+        }
+    }
+
+    // example usage (print all nodes)
+    // JSONObject obj = new JSONObject("{\"book\":{\"title\":\"Snow White\",\"author\":\"Grimm\"}}");
+    // obj.toStream().forEach(System.out::println);
 
 }
