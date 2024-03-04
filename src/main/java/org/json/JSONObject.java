@@ -2909,20 +2909,24 @@ public class JSONObject {
     private void traverseAndBuildStream(Object current, String currentPath, Builder<JSONNode> builder) {
         if (current instanceof JSONObject) {
             JSONObject jsonObject = (JSONObject) current;
-            jsonObject.map.forEach((key, value) -> {
-                String newPath = currentPath.equals("$") ? key : currentPath + "." + key;
+            jsonObject.keySet().forEach(key -> {
+                Object value = jsonObject.get(key);
+                String newPath = currentPath.equals("$") ? "$." + key : currentPath + "." + key;
                 traverseAndBuildStream(value, newPath, builder);
             });
         } else if (current instanceof JSONArray) {
             JSONArray jsonArray = (JSONArray) current;
             for (int i = 0; i < jsonArray.length(); i++) {
+                Object item = jsonArray.get(i);
                 String newPath = String.format("%s[%d]", currentPath, i);
-                traverseAndBuildStream(jsonArray.get(i), newPath, builder);
+                traverseAndBuildStream(item, newPath, builder);
             }
         } else {
-            builder.add(new JSONNode(null, current, currentPath)); // Add leaf nodes
+            String key = null;
+            builder.add(new JSONNode(key, current, currentPath));
         }
     }
+
 
     // example usage (print all nodes)
     // JSONObject obj = new JSONObject("{\"book\":{\"title\":\"Snow White\",\"author\":\"Grimm\"}}");

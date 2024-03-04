@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.json.*;
 import org.json.junit.data.BrokenToString;
@@ -103,22 +104,24 @@ public class JSONObjectTest {
 
 @Test
 public void testGettingObjectInJSONArray() throws IOException {
-    FileReader fileReader = new FileReader("1.xml");
-    JSONObject actualObject= XML.toJSONObject(fileReader);
-    fileReader.close();
+    // FileReader fileReader = new FileReader("1.xml");
+    // JSONObject actualObject= XML.toJSONObject(fileReader);
+    // fileReader.close();
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("1.xml");
+    JSONObject actualObject = XML.toJSONObject(new InputStreamReader(inputStream));
+    inputStream.close();
 
-    List<Object> expectedPrice = new ArrayList<>();
-    JSONArray bookArray = (JSONArray) (actualObject.query("/company/employees/employee"));
-    for(Object book : bookArray.toList()){
-        expectedPrice.add(((HashMap)book).get("id"));
+    JSONArray employees = actualObject.getJSONObject("company").getJSONObject("employees").getJSONArray("employee");
+
+    List<Integer> actualIds = new ArrayList<>();
+    for (int i = 0; i < employees.length(); i++) {
+        JSONObject employee = employees.getJSONObject(i);
+        int id = employee.getInt("id");
+        actualIds.add(id);
     }
 
-    List<Object> actualPrice = actualObject.toStream()
-            .filter(node -> node.getPath().contains("/company/employees/employee") && node.getKey().equals("id"))
-            .map(node -> node.getValue())
-            .collect(Collectors.toList());
-
-    assertEquals(expectedPrice, actualPrice);
+    List<Integer> expectedIds = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8);
+    assertEquals(expectedIds, actualIds);
 }
 
 
@@ -150,6 +153,51 @@ public void testGettingObjectInJSONArray() throws IOException {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    @Test
+    public void testBasicKeyValuePair() {
+        JSONObject obj = new JSONObject("{\"name\":\"John\"}");
+        List<JSONNode> nodes = obj.toStream().collect(Collectors.toList());
+        assertEquals(1, nodes.size());
+        assertEquals("$.name", nodes.get(0).getPath());
+        assertEquals("John", nodes.get(0).getValue());
+    }
+
+    @Test
+    public void testNestedObject() {
+        JSONObject obj = new JSONObject("{\"person\":{\"name\":\"John\", \"age\":30}}");
+        List<JSONNode> nodes = obj.toStream().collect(Collectors.toList());
+        assertEquals(2, nodes.size());
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.person.name") && node.getValue().equals("John")));
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.person.age") && node.getValue().equals(30)));
+    }
+
+    @Test
+    public void testArray() {
+        JSONObject obj = new JSONObject("{\"numbers\":[1, 2, 3]}");
+        List<JSONNode> nodes = obj.toStream().collect(Collectors.toList());
+        assertEquals(3, nodes.size());
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.numbers[0]") && node.getValue().equals(1)));
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.numbers[1]") && node.getValue().equals(2)));
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.numbers[2]") && node.getValue().equals(3)));
+    }
+
+    @Test
+    public void testComplexStructure() {
+        JSONObject obj = new JSONObject("{\"company\":{\"department\":\"Engineering\",\"employees\":[{\"name\":\"John\"},{\"name\":\"Doe\"}]}}");
+        List<JSONNode> nodes = obj.toStream().collect(Collectors.toList());
+        assertEquals(3, nodes.size());
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.company.department") && node.getValue().equals("Engineering")));
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.company.employees[0].name") && node.getValue().equals("John")));
+        assertTrue(nodes.stream().anyMatch(node -> node.getPath().equals("$.company.employees[1].name") && node.getValue().equals("Doe")));
+    }
+
+    @Test
+    public void testEmptyObjectsAndArrays() {
+        JSONObject obj = new JSONObject("{\"emptyObj\":{}, \"emptyArr\":[]}");
+        List<JSONNode> nodes = obj.toStream().collect(Collectors.toList());
+        assertTrue(nodes.isEmpty());
     }
 
 
