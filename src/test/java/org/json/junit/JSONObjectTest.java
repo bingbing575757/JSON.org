@@ -1,8 +1,15 @@
 package org.json.junit;
-
+import org.json.JSONNode;
 /*
 Public Domain.
 */
+//import org.json.JSONObject;
+//
+//import org.junit.jupiter.api.Test;
+//import java.util.List;
+//import java.util.stream.Collectors;
+//import static org.junit.jupiter.api.Assertions.assertEquals;
+//import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static java.lang.Double.NaN;
 import static org.junit.Assert.assertEquals;
@@ -16,27 +23,15 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import org.json.CDL;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONPointerException;
-import org.json.JSONParserConfiguration;
-import org.json.JSONString;
-import org.json.JSONTokener;
-import org.json.ParserConfiguration;
-import org.json.XML;
+import org.json.*;
 import org.json.junit.data.BrokenToString;
 import org.json.junit.data.ExceptionalBean;
 import org.json.junit.data.Fraction;
@@ -76,6 +71,88 @@ public class JSONObjectTest {
      */
     static final Pattern NUMBER_PATTERN = Pattern.compile("-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?");
 
+
+
+    /***************   SWE 262 P MileStone 4  Test   ****************/
+    @Test
+    public void testToStreamObjectSize() {
+        JSONObject obj1 = XML.toJSONObject("<Books>" +
+                "<book><title>AAA</title><author>ASmith</author></book>" +
+                "<book><title>BBB</title><author>BSmith</author></book>" +
+                "<book><title>BBB</title><author>BSmith</author></book>" +
+                "<book><title>BBB</title><author>BSmith</author></book>" +
+                "<book><title>BBB</title><author>BSmith</author></book>" +
+                "<book><title>BBB</title><author>BSmith</author></book>" +
+                "<book><title>BBB</title><author>BSmith</author></book>" +
+                "<book><title>BBB</title><author>BSmith</author></book>" +
+                "</Books>");
+        JSONObject obj2 = XML.toJSONObject("<Books></Books>");
+        JSONObject obj3 = XML.toJSONObject("<Books><book><title>AAA</title><author>ASmith</author></book></Books>");
+
+        int expectedResult1 = 16;
+        assertEquals(expectedResult1, obj1.toStream().count());
+        int expectedResult2 = 1;
+        assertEquals(expectedResult2, obj2.toStream().count());
+        int expectedResult = 2;
+        assertEquals(expectedResult, obj3.toStream().count());
+
+    }
+
+
+
+
+@Test
+public void testGettingObjectInJSONArray() throws IOException {
+    FileReader fileReader = new FileReader("1.xml");
+    JSONObject actualObject= XML.toJSONObject(fileReader);
+    fileReader.close();
+
+    List<Object> expectedPrice = new ArrayList<>();
+    JSONArray bookArray = (JSONArray) (actualObject.query("/company/employees/employee"));
+    for(Object book : bookArray.toList()){
+        expectedPrice.add(((HashMap)book).get("id"));
+    }
+
+    List<Object> actualPrice = actualObject.toStream()
+            .filter(node -> node.getPath().contains("/company/employees/employee") && node.getKey().equals("id"))
+            .map(node -> node.getValue())
+            .collect(Collectors.toList());
+
+    assertEquals(expectedPrice, actualPrice);
+}
+
+
+    @Test
+    public void testStreamObjectIteration() {
+        try {
+            try (InputStream xmlStream = XMLTest.class.getClassLoader().getResourceAsStream("books.xml")) {
+                Reader xmlStreamReader = new InputStreamReader(xmlStream);
+                JSONObject actualJSONObject = XML.toJSONObject(xmlStreamReader);
+                final String EXPECTED_ENTRIES = "[/catalog/book/0/price=44.95]\n" +
+                        "[/catalog/book/1/price=5.95]\n" +
+                        "[/catalog/book/2/price=5.95]\n" +
+                        "[/catalog/book/3/price=5.95]\n" +
+                        "[/catalog/book/4/price=5.95]\n" +
+                        "[/catalog/book/5/price=4.95]\n" +
+                        "[/catalog/book/6/price=4.95]\n" +
+                        "[/catalog/book/7/price=4.95]\n" +
+                        "[/catalog/book/8/price=6.95]\n" +
+                        "[/catalog/book/9/price=36.95]\n" +
+                        "[/catalog/book/10/price=36.95]\n" +
+                        "[/catalog/book/11/price=49.95]\n";
+
+                StringBuilder sb = new StringBuilder();
+                actualJSONObject.toStream()
+                        .filter(node -> node.getPath().contains("/catalog/book") && node.getKey().equals("price"))
+                        .forEach(node -> sb.append("[").append(node.getPath()).append("=").append(node.getValue()).append("]\n"));
+
+                assertEquals(EXPECTED_ENTRIES, sb.toString());
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+
     /**
      * Tests that the similar method is working as expected.
      */
@@ -96,17 +173,17 @@ public class JSONObjectTest {
         JSONObject obj3 = new JSONObject()
                 .put("key1", "abc")
                 .put("key2", 2)
-                .put("key3", new String(string1));
+                .put("key3", string1);
         
         JSONObject obj4 = new JSONObject()
                 .put("key1", "abc")
                 .put("key2", 2.0)
-                .put("key3", new String(string1));
+                .put("key3", string1);
 
         JSONObject obj5 = new JSONObject()
                 .put("key1", "abc")
                 .put("key2", 2.0)
-                .put("key3", new String(string2));
+                .put("key3", string2);
         
         assertFalse("obj1-obj2 Should eval to false", obj1.similar(obj2));
         assertTrue("obj1-obj3 Should eval to true", obj1.similar(obj3));
