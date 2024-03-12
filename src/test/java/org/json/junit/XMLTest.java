@@ -3,11 +3,12 @@ package org.json.junit;
 /*
 Public Domain.
 */
-
+import java.util.concurrent.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.json.*;
@@ -15,6 +16,8 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import javax.lang.model.util.Elements;
 
 import static org.junit.Assert.*;
 
@@ -197,8 +200,8 @@ public class XMLTest {
         assertEquals("Resulting JSONObject should match the expected", expected.toString(), actual.toString());
     }
 
-    //Test Cases for Milestone 3
-
+//    //Test Cases for Milestone 3
+//
     @Test
     public void shouldTransformKey() {
         // Original XML string
@@ -240,7 +243,7 @@ public class XMLTest {
         assertTransformation(xmlString, expectedJsonWithPrefix, key -> "swe262_" + key, "Prefix Transformation");
         assertTransformation(xmlString, expectedJsonWithEmptyKeys, key -> "", "Empty Key Transformation");
     }
-
+    @Test
     private void assertTransformation(String xml, String expectedJson, Function<String, String> transformer, String testName) {
         try {
             JSONObject transformedJson = XML.toJSONObject(new StringReader(xml), transformer);
@@ -257,6 +260,70 @@ public class XMLTest {
         }
     }
 
+    //Test Cases for Milestone 5
+
+    //    ---------------------------- Milestone 5 ------------------------------
+    @Test
+    public void shouldReturnAsyncObject(){
+
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<contact>\n" +
+                "  <nick>Crista </nick>\n" +
+                "  <name>Crista Lopes</name>\n" +
+                "  <address>\n" +
+                "    <street>Ave of Nowhere</street>\n" +
+                "    <zipcode>92614</zipcode>\n" +
+                "  </address>\n" +
+                "</contact>";
+
+        String xml2= "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<note>\n" +
+                "  <to>Tove</to>\n" +
+                "  <from>Jani</from>\n" +
+                "  <heading>Reminder</heading>\n" +
+                "  <body><![CDATA[Don't forget to buy milk &amp; eggs on your way home!]]></body>\n" +
+                "</note>";
+
+        String xml3 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<library>\n" +
+                "  <book>\n" +
+                "    <title>Effective Java</title>\n" +
+                "    <author>Joshua Bloch</author>\n" +
+                "    <year>2018</year>\n" +
+                "    <publisher>Addison-Wesley</publisher>\n" +
+                "    <isbn>0134685997</isbn>\n" +
+                "  </book>\n" +
+                "  <book>\n" +
+                "    <title>Clean Code: A Handbook of Agile Software Craftsmanship</title>\n" +
+                "    <author>Robert C. Martin</author>\n" +
+                "    <year>2008</year>\n" +
+                "    <publisher>Prentice Hall</publisher>\n" +
+                "    <isbn>0132350882</isbn>\n" +
+                "  </book>\n" +
+                "  <book>\n" +
+                "    <title>Design Patterns: Elements of Reusable Object-Oriented Software</title>\n" +
+                "    <author>Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides</author>\n" +
+                "    <year>1994</year>\n" +
+                "    <publisher>Addison-Wesley Professional</publisher>\n" +
+                "    <isbn>0201633612</isbn>\n" +
+                "  </book>\n" +
+                "</library>";
+
+
+
+        Consumer<Exception> sendError = (err) -> fail(err.getMessage());
+
+        CompletableFuture<JSONObject> jobj = XML.toJSONObject(new StringReader(xml), sendError);
+        CompletableFuture<JSONObject> jobj2 = XML.toJSONObject(new StringReader(xml2), sendError);
+        CompletableFuture<JSONObject> jobj3 = XML.toJSONObject(new StringReader(xml3), sendError);
+        JSONObject expected = XML.toJSONObject(xml);
+        JSONObject expected2 = XML.toJSONObject(xml2);
+        JSONObject expected3 = XML.toJSONObject(xml3);
+        assertEquals(expected.toString(), jobj.join().toString());
+        assertEquals(expected2.toString(), jobj2.join().toString());
+        assertEquals(expected3.toString(), jobj3.join().toString());}
+
+//////////End here
 
 
     /**

@@ -3,7 +3,7 @@ package org.json;
 /*
 Public Domain.
 */
-
+import java.util.concurrent.*;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.json.NumberConversionUtil.potentialNumber;
 import static org.json.NumberConversionUtil.stringToNumber;
@@ -1013,6 +1015,8 @@ public class XML {
     }
 
 
+
+
     /**
      * This method removes any JSON entry which has the key set by XMLParserConfiguration.cDataTagName
      * and contains whitespace as this is caused by whitespace between tags. See test XMLTest.testNestedWithWhitespaceTrimmingDisabled.
@@ -1196,6 +1200,21 @@ public class XML {
         return jo;
     }
 
+
+//    //    ---------------------------- Milestone 5 ------------------------------
+
+public static CompletableFuture<JSONObject> toJSONObject(Reader reader, Consumer<Exception> err) {
+    return CompletableFuture.supplyAsync(() -> {
+        try (reader) { // Automatically close reader
+            JSONObject jsonObject = XML.toJSONObject(reader);
+            System.out.println(">> Finished converting XML to JSON!\n");
+            return jsonObject;
+        } catch (Exception e) {
+            err.accept(e);
+            throw new CompletionException(e); // Wrap exception as CompletionException
+        }
+    }, Executors.newCachedThreadPool()); // Use a dedicated executor, suitable for I/O operations
+}
 
     /**
      * Convert a well-formed (but not necessarily valid) XML string into a
